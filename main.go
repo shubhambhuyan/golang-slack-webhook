@@ -1,7 +1,13 @@
 package slack
 
 import (
+	"bytes"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+
 	"github.com/parnurzeal/gorequest"
 )
 
@@ -25,7 +31,7 @@ type AttachmentAction struct {
 	Options         []AttachmentActionOption      `json:"options,omitempty"`          // Optional. Maximum of 100 options can be provided in each menu.
 	SelectedOptions []AttachmentActionOption      `json:"selected_options,omitempty"` // Optional. The first element of this array will be set as the pre-selected option for this menu.
 	OptionGroups    []AttachmentActionOptionGroup `json:"option_groups,omitempty"`    // Optional.
-	Confirm         []ConfirmationField            `json:"confirm,omitempty"`          // Optional.
+	Confirm         []ConfirmationField           `json:"confirm,omitempty"`          // Optional.
 	URL             string                        `json:"url,omitempty"`              // Optional.
 }
 
@@ -95,7 +101,7 @@ type Attachment struct {
 	Footer     string `json:"footer,omitempty"`
 	FooterIcon string `json:"footer_icon,omitempty"`
 
-	Ts 				 int64 `json:"ts,omitempty"`
+	Ts int64 `json:"ts,omitempty"`
 }
 
 type Payload struct {
@@ -134,6 +140,25 @@ func Send(webhookUrl string, proxy string, payload Payload) []error {
 	}
 	if resp.StatusCode >= 400 {
 		return []error{fmt.Errorf("Error sending msg. Status: %v", resp.Status)}
+	}
+
+	return nil
+}
+
+func PostMessage(webhookUrl string, payload Payload) error {
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	resp, err := http.Post(webhookUrl, "application/json", bytes.NewReader(body))
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		t, _ := ioutil.ReadAll(resp.Body)
+		return errors.New(string(t))
 	}
 
 	return nil
