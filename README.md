@@ -53,10 +53,17 @@ func main() {
       Attachments: []slack.Attachment{attachment1},
     }
     
-    //send message via webhook
+    //send message via webhook method 1
     err := slack.Send(webhookUrl, "", payload)
     if len(err) > 0 {
       fmt.Printf("error: %s\n", err)
     }
+    
+    //send message via webhook method 2
+    err := slack.PostMessage(webhookUrl, payload)
+	if (err) != nil {
+		fmt.Print(err)
+	}
+    
     
 }
